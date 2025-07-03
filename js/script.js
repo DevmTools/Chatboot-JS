@@ -2,11 +2,19 @@
 const chatBody = document.querySelector(".chat-body");
 const messageInput = document.querySelector(".message-input");
 const sendMessageBtn = document.querySelector("#send-message");
-const API_KEY = "CHAVE_API_GEMINI_AQUI";
+const fileInput = document.querySelector("#file-input");
+const fileUploadWrapper = document.querySelector(".file-upload-wrapper");
+const fileUploadCancel = document.querySelector("#file-cancel");
+
+const API_KEY = "API_GEMINI_KEY";
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
 const userData = {
-    message: null
+    message: null,
+    file: {
+        data: null,
+        mime_type: null
+    }
 }
 
 const createMessageElement = (content, ...classes) => {
@@ -22,7 +30,9 @@ const botResponse = async (event) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            contents: [{ parts: [{ text: userData.message }] }]
+            contents: [{
+                parts: [{ text: userData.message }, ...(userData.file?.data ? [{ inline_data: userData.file }] : [])]
+            }]
         })
     };
 
@@ -32,7 +42,7 @@ const botResponse = async (event) => {
         if (!response.ok) throw new Error(data.error.message)
 
         //tratando a mensagem de returno da API
-        const apiResponseText = data.candidates[0]?.content?.parts[0].text.replace(/\*\*(.*?)\*\*/g, "$1").trim();
+        const apiResponseText = data.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g, "$1").trim();
 
         messageElement.innerText = apiResponseText;
     } catch (error) {
@@ -40,6 +50,7 @@ const botResponse = async (event) => {
         messageElement.innerText = error.message;
         messageElement.style.color = "red";
     } finally {
+        userData.file = {};
         event.classList.remove("thinking");
         chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" })//volta top quando recebe mensagem da api
     }
@@ -49,8 +60,15 @@ const handleOutgoingMessage = (event) => {
     event.preventDefault()
     userData.message = messageInput.value.trim();
     messageInput.value = "";
+    fileUploadWrapper.classList.remove("file-uploaded");
 
-    const messageContent = `<div class="message-text"></div>`;
+    const messageContent = `
+    <div class="message-text"></div> 
+        ${userData.file.data
+            ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="attachment"/>`
+            : ""}
+    `;
+
     const outgoingMessageDiv = createMessageElement(messageContent, "user-message");
     outgoingMessageDiv.querySelector(".message-text").textContent = userData.message
     chatBody.appendChild(outgoingMessageDiv);
@@ -77,6 +95,11 @@ const handleOutgoingMessage = (event) => {
     }, 600)
 }
 
+fileUploadCancel.addEventListener("click", () => {
+    userData.file = {};
+    fileUploadWrapper.classList.remove("file-uploaded");
+})
+
 messageInput.addEventListener("keydown", (event) => {
     const userMessage = event.target.value.trim()
     if (event.key === "Enter" && userMessage) {
@@ -87,3 +110,26 @@ messageInput.addEventListener("keydown", (event) => {
 sendMessageBtn.addEventListener("click", (event) => {
     handleOutgoingMessage(event)
 })
+
+fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (!file) return
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+        fileUploadWrapper.querySelector("img").src = event.target.result;
+        fileUploadWrapper.classList.add("file-uploaded");
+
+        const base64String = event.target.result.split(",")[1]
+        userData.file = {
+            data: base64String,
+            mime_type: file.type
+        };
+
+        fileInput.value = "";
+    }
+    reader.readAsDataURL(file);
+
+})
+
+document.querySelector("#file-upload").addEventListener("click", () => fileInput.click());

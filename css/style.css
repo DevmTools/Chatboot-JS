@@ -128,14 +128,18 @@ body {
     background: #fb522b;
     color: #fff;
     border-radius: 14px 14px 2px 14px;
+}
 
+.chat-body .user-message .attachment {
+    width: 50%;
+
+    border-radius: 13px 3px 13px 13px
 }
 
 .chat-body .bot-message .thinking-indicator {
     display: flex;
     gap: 4px;
     padding-block: 15px;
-
 }
 
 .chat-body .bot-message .thinking-indicator .dot {
@@ -217,7 +221,7 @@ body {
     padding-right: 6px;
 }
 
-.chat-form .chat-controls>button {
+.chat-form .chat-controls button {
     height: 35px;
     width: 35px;
     border: none;
@@ -245,7 +249,41 @@ body {
     background: #fb522b;
 }
 
-.chat-form .chat-controls>button:hover {
+.chat-form .chat-controls button:hover {
     background-color: #f2f2f2;
     color: #fb522b;
+}
+
+.chat-form .file-upload-wrapper {
+    height: 35px;
+    width: 35px;
+    position: relative;
+
+}
+
+.chat-form .file-upload-wrapper :where(img, button) {
+    position: absolute;
+}
+
+.chat-form .file-upload-wrapper img {
+
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.chat-form .file-upload-wrapper #file-cancel {
+    color: #ff0000;
+    background-color: #fff;
+}
+
+.chat-form .file-upload-wrapper :where(img, #file-cancel),
+.chat-form .file-upload-wrapper.file-uploaded #file-upload {
+    display: none;
+}
+
+.chat-form .file-upload-wrapper.file-uploaded img,
+.chat-form .file-upload-wrapper.file-uploaded:hover #file-cancel {
+    display: block;
 }
